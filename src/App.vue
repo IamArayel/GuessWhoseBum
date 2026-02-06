@@ -1,47 +1,124 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref, onMounted, computed } from 'vue'
+
+// Import all images from the folder
+// Using standard Vite glob import. We map the modules to their default export (the URL).
+const imagesGlob = import.meta.glob('./components/img/bums/*.jpg', { eager: true })
+const imagePaths = Object.values(imagesGlob).map(mod => mod.default)
+
+// Configuration for each image.
+// We define a specific transform-origin for each to zoom on a different part.
+// Random values are generated for now.
+const imageConfigs = imagePaths.map(() => ({
+  x: Math.floor(Math.random() * 100),
+  y: Math.floor(Math.random() * 100),
+  scale: 5 // Zoom level
+}))
+
+const currentIndex = ref(0)
+const isZoomedOut = ref(false)
+
+const currentImage = computed(() => imagePaths[currentIndex.value])
+const currentConfig = computed(() => imageConfigs[currentIndex.value])
+
+const pickRandomImage = () => {
+  if (imagePaths.length === 0) return
+  currentIndex.value = Math.floor(Math.random() * imagePaths.length)
+  isZoomedOut.value = false
+}
+
+const handleClick = () => {
+  if (isZoomedOut.value) return // Already clicked
+
+  isZoomedOut.value = true
+
+  // Wait for animation to finish (0.4s) then open Wikipedia
+  setTimeout(() => {
+    window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
+  }, 500)
+}
+
+onMounted(() => {
+  pickRandomImage()
+})
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
   <main>
-    <TheWelcome />
+    <h1>Guess whose bum?</h1>
+    <div class="game-container" v-if="currentImage">
+      <div
+        class="image-wrapper"
+        @click="handleClick"
+        :class="{ 'zoomed-out': isZoomedOut }"
+      >
+        <img
+          :src="currentImage"
+          alt="Guess whose bum"
+          :style="{
+            transformOrigin: `${currentConfig.x}% ${currentConfig.y}%`,
+            transform: isZoomedOut ? 'scale(1)' : `scale(${currentConfig.scale})`
+          }"
+        />
+      </div>
+      <p class="hint" v-if="!isZoomedOut">Click the image to reveal!</p>
+      <p class="hint" v-else>It's Jensen Ackles!</p>
+    </div>
+    <div v-else>
+      <p>No images found in ./components/img/bums/</p>
+    </div>
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #222;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
 }
 
-.logo {
+h1 {
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.image-wrapper {
+  width: 300px;
+  height: 300px;
+  overflow: hidden;
+  border: 4px solid #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  background-color: #000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* transform and transform-origin are set inline */
   display: block;
-  margin: 0 auto 2rem;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.hint {
+  font-size: 1.2rem;
+  opacity: 0.8;
+  min-height: 1.5em;
 }
 </style>
