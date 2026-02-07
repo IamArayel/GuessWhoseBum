@@ -51,10 +51,10 @@ const focusPoints = {
 const imageData = Object.entries(imagesGlob).map(([key, mod]) => {
   const filename = key.split('/').pop()
   // Utilise la config définie ou génère des valeurs aléatoires
-  // const focus = focusPoints[filename] || {
-  //   x: Math.floor(Math.random() * 100),
-  //   y: Math.floor(Math.random() * 100)
-  // }
+  const focus = focusPoints[filename] || {
+    x: Math.floor(Math.random() * 100),
+    y: Math.floor(Math.random() * 100)
+  }
 
   return {
     path: mod.default,
