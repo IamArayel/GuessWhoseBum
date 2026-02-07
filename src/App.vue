@@ -2,28 +2,79 @@
 import { ref, onMounted, computed } from 'vue'
 
 // Import all images from the folder
-// Using standard Vite glob import. We map the modules to their default export (the URL).
+// Using standard Vite glob import.
 const imagesGlob = import.meta.glob('./components/img/bums/*.jpg', { eager: true })
-const imagePaths = Object.values(imagesGlob).map(mod => mod.default)
 
-// Configuration for each image.
-// We define a specific transform-origin for each to zoom on a different part.
-// Random values are generated for now.
-const imageConfigs = imagePaths.map(() => ({
-  x: Math.floor(Math.random() * 100),
-  y: Math.floor(Math.random() * 100),
-  scale: 5 // Zoom level
-}))
+// Configuration manuelle des points de focus pour chaque image.
+// Les clés correspondent aux noms de fichiers. Les valeurs sont en pourcentage (0-100).
+// x:0, y:0 est en haut à gauche, x:100, y:100 est en bas à droite.
+// Centrer le zoom sur la partie "intéressante" de l'image.
+const focusPoints = {
+  '01.jpg': { x: 65, y: 50 },
+  '02.jpg': { x: 75, y: 45 },
+  '03.jpg': { x: 75, y: 75 },
+  '04.jpg': { x: 75, y: 75 },
+  '05.jpg': { x: 50, y: 50 },
+  '06.jpg': { x: 90, y: 30 },
+  '07.jpg': { x: 40, y: 55 },
+  '08.jpg': { x: 55, y: 85 },
+  '09.jpg': { x: 35, y: 70 },
+  '10.jpg': { x: 75, y: 50 },
+  '11.jpg': { x: 50, y: 50 },
+  '12.jpg': { x: 50, y: 50 },
+  '13.jpg': { x: 50, y: 50 },
+  '14.jpg': { x: 50, y: 50 },
+  '15.jpg': { x: 50, y: 50 },
+  '16.jpg': { x: 50, y: 55 },
+  '17.jpg': { x: 45, y: 60 },
+  '18.jpg': { x: 35, y: 50 },
+  '19.jpg': { x: 40, y: 50 },
+  '20.jpg': { x: 50, y: 80 },
+  '21.jpg': { x: 50, y: 65 },
+  '22.jpg': { x: 50, y: 50 },
+  '23.jpg': { x: 65, y: 50 },
+  '24.jpg': { x: 50, y: 50 },
+  '25.jpg': { x: 50, y: 50 },
+  '26.jpg': { x: 50, y: 50 },
+  '27.jpg': { x: 50, y: 50 },
+  '28.jpg': { x: 50, y: 50 },
+  '29.jpg': { x: 50, y: 55 },
+  '30.jpg': { x: 50, y: 50 },
+  '31.jpg': { x: 50, y: 85 },
+  '32.jpg': { x: 45, y: 55 },
+  '33.jpg': { x: 50, y: 55 },
+  '34.jpg': { x: 50, y: 50 },
+  '35.jpg': { x: 55, y: 50 },
+}
+
+// Transformation de la liste des images pour inclure la config
+const imageData = Object.entries(imagesGlob).map(([key, mod]) => {
+  const filename = key.split('/').pop()
+  // Utilise la config définie ou génère des valeurs aléatoires
+  // const focus = focusPoints[filename] || {
+  //   x: Math.floor(Math.random() * 100),
+  //   y: Math.floor(Math.random() * 100)
+  // }
+
+  return {
+    path: mod.default,
+    config: {
+      x: focus.x,
+      y: focus.y,
+      scale: 5 // Zoom level
+    }
+  }
+})
 
 const currentIndex = ref(0)
 const isZoomedOut = ref(false)
 
-const currentImage = computed(() => imagePaths[currentIndex.value])
-const currentConfig = computed(() => imageConfigs[currentIndex.value])
+const currentImage = computed(() => imageData[currentIndex.value]?.path)
+const currentConfig = computed(() => imageData[currentIndex.value]?.config)
 
 const pickRandomImage = () => {
-  if (imagePaths.length === 0) return
-  currentIndex.value = Math.floor(Math.random() * imagePaths.length)
+  if (imageData.length === 0) return
+  currentIndex.value = Math.floor(Math.random() * imageData.length)
   isZoomedOut.value = false
 }
 
@@ -45,7 +96,7 @@ onMounted(() => {
 
 <template>
   <main>
-    <button class="retry-btn" @click="pickRandomImage">Réessayer</button>
+    <button class="retry-btn" @click="pickRandomImage">I need to try again</button>
     <h1>Guess whose bum?</h1>
     <div class="game-container" v-if="currentImage">
       <div
@@ -63,7 +114,7 @@ onMounted(() => {
         />
       </div>
       <p class="hint" v-if="!isZoomedOut">Click the image to reveal!</p>
-      <p class="hint" v-else>OMG! It's Jensen Ackles!</p>
+      <p class="hint" v-else>OMG! It's Jensen Ackles bum!</p>
     </div>
     <div v-else>
       <p>No images found in ./components/img/bums/</p>
