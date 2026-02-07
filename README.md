@@ -1,4 +1,4 @@
-# guess-this-a55
+# guess-whose-bum
 
 Sur une idée brillante de la lubrique @Rowane (not judging 👀)
 
