@@ -1,4 +1,4 @@
-# guess-whose-bum
+# guessWhoseBum
 
 Sur une idée brillante de la lubrique @Rowane (not judging 👀)
 
