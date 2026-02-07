@@ -45,6 +45,7 @@ onMounted(() => {
 
 <template>
   <main>
+    <button class="retry-btn" @click="pickRandomImage">Réessayer</button>
     <h1>Guess whose bum?</h1>
     <div class="game-container" v-if="currentImage">
       <div
@@ -81,6 +82,27 @@ main {
   color: white;
   font-family: sans-serif;
   text-align: center;
+  position: relative; /* Needed for absolute positioning of the button */
+}
+
+.retry-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: #fff;
+  color: #222;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: background-color 0.2s;
+  z-index: 10;
+}
+
+.retry-btn:hover {
+  background-color: #eee;
 }
 
 h1 {
@@ -111,8 +133,8 @@ h1 {
 .image-wrapper.zoomed-out {
   width: auto;
   height: auto;
-  max-width: 70vw;
-  max-height: 70vh;
+  max-width: 90vw;
+  max-height: 80vh;
   overflow: visible;
 }
 
