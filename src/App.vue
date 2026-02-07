@@ -32,10 +32,10 @@ const handleClick = () => {
 
   isZoomedOut.value = true
 
-  // Wait for animation to finish (0.4s) then open Wikipedia
+  // Wait for animation to finish (3s), then open Wikipedia
   setTimeout(() => {
     window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
-  }, 500)
+  }, 3000)
 }
 
 onMounted(() => {
@@ -62,7 +62,7 @@ onMounted(() => {
         />
       </div>
       <p class="hint" v-if="!isZoomedOut">Click the image to reveal!</p>
-      <p class="hint" v-else>It's Jensen Ackles!</p>
+      <p class="hint" v-else>OMG! It's Jensen Ackles!</p>
     </div>
     <div v-else>
       <p>No images found in ./components/img/bums/</p>
