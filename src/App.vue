@@ -105,6 +105,15 @@ h1 {
   position: relative;
   background-color: #000;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  transition: all 0.4s ease; /* Added transition for wrapper size changes */
+}
+
+.image-wrapper.zoomed-out {
+  width: auto;
+  height: auto;
+  max-width: 70vw;
+  max-height: 70vh;
+  overflow: visible;
 }
 
 img {
@@ -114,6 +123,14 @@ img {
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   /* transform and transform-origin are set inline */
   display: block;
+}
+
+.image-wrapper.zoomed-out img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .hint {
