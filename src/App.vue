@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue'
 
 // Import all images from the folder
 // Using standard Vite glob import.
@@ -68,6 +68,8 @@ const imageData = Object.entries(imagesGlob).map(([key, mod]) => {
 
 const currentIndex = ref(0)
 const isZoomedOut = ref(false)
+const isDarkMode = ref(false)
+const isRedirectEnabled = ref(true) // Default to enabled
 
 const currentImage = computed(() => imageData[currentIndex.value]?.path)
 const currentConfig = computed(() => imageData[currentIndex.value]?.config)
@@ -79,136 +81,425 @@ const pickRandomImage = () => {
 }
 
 const handleClick = () => {
-  if (isZoomedOut.value) return // Already clicked
-
+  if (isZoomedOut.value) return
   isZoomedOut.value = true
 
-  // Wait for animation to finish (3s), then open Wikipedia
-  // setTimeout(() => {
-  //   window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
-  // }, 3000)
+  // Only redirect if enabled
+  if (isRedirectEnabled.value) {
+    setTimeout(() => {
+      window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
+    }, 3000)
+  }
+}
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light')
+}
+
+// --- Background Animation ---
+const canvas = ref(null)
+let ctx = null
+let animationFrameId
+let particles = []
+
+const particleColor = computed(() => {
+  return isDarkMode.value ? 'rgba(79,9,179,0.68)' : 'rgba(188,30,30,0.68)'
+})
+
+class Particle {
+  constructor(w, h) {
+    this.x = Math.random() * w
+    this.y = Math.random() * h
+    this.vx = (Math.random() - 0.5) * 0.5
+    this.vy = (Math.random() - 0.5) * 0.5
+    this.size = Math.random() * 3 + 1
+  }
+
+  update(w, h) {
+    this.x += this.vx
+    this.y += this.vy
+
+    if (this.x < 0 || this.x > w) this.vx *= -1
+    if (this.y < 0 || this.y > h) this.vy *= -1
+  }
+
+  draw(context) {
+    context.beginPath()
+    context.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+    context.fillStyle = particleColor.value
+    context.fill()
+  }
+}
+
+const initParticles = () => {
+  if (!canvas.value) return
+  const w = canvas.value.width
+  const h = canvas.value.height
+  particles = []
+  const particleCount = Math.floor((w * h) / 20000) // Adjust density
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle(w, h))
+  }
+}
+
+const animate = () => {
+  if (!canvas.value || !ctx) return
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
+
+  particles.forEach(p => {
+    p.update(canvas.value.width, canvas.value.height)
+    p.draw(ctx)
+  })
+
+  animationFrameId = requestAnimationFrame(animate)
+}
+
+const handleResize = () => {
+  if (canvas.value) {
+    canvas.value.width = window.innerWidth
+    canvas.value.height = window.innerHeight
+    initParticles()
+  }
 }
 
 onMounted(() => {
+  // Detect system preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    isDarkMode.value = true
+    document.documentElement.setAttribute('data-theme', 'dark')
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light')
+  }
   pickRandomImage()
+
+  // Init Canvas
+  if (canvas.value) {
+    ctx = canvas.value.getContext('2d')
+    handleResize()
+    animate()
+    window.addEventListener('resize', handleResize)
+  }
+})
+
+onUnmounted(() => {
+  cancelAnimationFrame(animationFrameId)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
   <main>
-    <button class="retry-btn" @click="pickRandomImage">I need to try again</button>
-    <h1>Guess whose bum?</h1>
-    <div class="game-container" v-if="currentImage">
-      <div
-        class="image-wrapper"
-        @click="handleClick"
-        :class="{ 'zoomed-out': isZoomedOut }"
-      >
-        <img
-          :src="currentImage"
-          alt="Guess whose bum"
-          :style="{
-            transformOrigin: `${currentConfig.x}% ${currentConfig.y}%`,
-            transform: isZoomedOut ? 'scale(1)' : `scale(${currentConfig.scale})`
-          }"
-        />
+    <canvas ref="canvas" class="background-canvas"></canvas>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle neu-btn-icon" @click="toggleTheme" title="Toggle Theme">
+      <span v-if="isDarkMode">☀️</span>
+      <span v-else>🌙</span>
+    </button>
+
+    <div class="content-wrapper">
+      <h1 class="title">Guess whose bum?</h1>
+
+      <div class="game-card neu-card" v-if="currentImage">
+        <div
+          class="image-frame neu-inset"
+          @click="handleClick"
+          :class="{ 'zoomed-out': isZoomedOut }"
+        >
+          <img
+            :src="currentImage"
+            alt="Guess whose bum"
+            :style="{
+              transformOrigin: `${currentConfig.x}% ${currentConfig.y}%`,
+              transform: isZoomedOut ? 'scale(1)' : `scale(${currentConfig.scale})`
+            }"
+          />
+        </div>
+
+        <div class="info-area">
+          <p class="hint" v-if="!isZoomedOut">Click to reveal</p>
+          <p class="reveal-text" v-else>OMG! It's Jensen Ackles bum!</p>
+        </div>
+
+        <button class="retry-btn neu-btn" @click="pickRandomImage">
+          Try another one
+        </button>
+
+        <!-- Neumorphic Checkbox -->
+        <label class="neu-checkbox-label">
+          <input type="checkbox" v-model="isRedirectEnabled" />
+          <div class="neu-checkbox-box">
+            <svg viewBox="0 0 24 24" class="checkmark">
+              <path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="checkbox-text">Enable Wikipedia Redirect</span>
+        </label>
+
       </div>
-      <p class="hint" v-if="!isZoomedOut">Click the image to reveal!</p>
-      <p class="hint" v-else>OMG! It's Jensen Ackles bum!</p>
-    </div>
-    <div v-else>
-      <p>No images found in ./components/img/bums/</p>
+
+      <div v-else class="neu-card">
+        <p>No images found.</p>
+      </div>
     </div>
   </main>
 </template>
 
+<style>
+/* Global Variables for Neumorphism */
+:root {
+  --bg-color: #e0e5ec;
+  --text-color: #4d4d4d;
+  --shadow-light: #ffffff;
+  --shadow-dark: #a3b1c6;
+  --accent-color: #6d5dfc;
+  --btn-text: #4d4d4d;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212; /* Deep Black */
+  --text-color: #e0e0e0;
+  --shadow-light: #1e1e1e; /* Slightly lighter for highlight */
+  --shadow-dark: #000000; /* Pure black for shadow */
+  --accent-color: #bb86fc; /* Purple accent often used in dark modes */
+  --btn-text: #e0e0e0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+</style>
+
 <style scoped>
 main {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background-color: #222;
-  color: white;
-  font-family: sans-serif;
-  text-align: center;
-  position: relative; /* Needed for absolute positioning of the button */
+  position: relative;
+  padding: 20px;
+  /* Ensure main is relative for absolute children if needed, but we use fixed for canvas */
 }
 
-.retry-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  background-color: #fff;
-  color: #222;
-  border: none;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: background-color 0.2s;
-  z-index: 10;
+.background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
-.retry-btn:hover {
-  background-color: #eee;
-}
-
-h1 {
-  margin-bottom: 2rem;
-  font-size: 2rem;
-}
-
-.game-container {
+.content-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 500px;
+  z-index: 1; /* Above canvas */
 }
 
-.image-wrapper {
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+  text-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+}
+
+/* Neumorphic Card */
+.neu-card {
+  background: var(--bg-color);
+  border-radius: 30px;
+  box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* Image Frame (Inset Shadow) */
+.image-frame {
   width: 300px;
   height: 300px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 4px solid #fff;
-  border-radius: 12px;
   cursor: pointer;
   position: relative;
-  background-color: #000;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: all 0.4s ease; /* Added transition for wrapper size changes */
+  border: 5px solid var(--bg-color); /* Creates spacing for the inset shadow */
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.image-wrapper.zoomed-out {
-  width: auto;
+.neu-inset {
+  box-shadow: inset 8px 8px 16px var(--shadow-dark), inset -8px -8px 16px var(--shadow-light);
+}
+
+.image-frame.zoomed-out {
+  width: 100%;
   height: auto;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow: visible;
+  aspect-ratio: 1/1; /* Maintain square or adjust as needed */
+  box-shadow: none; /* Remove inset shadow when revealed if desired, or keep it */
+  border-radius: 10px;
 }
 
 img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  /* transform and transform-origin are set inline */
   display: block;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.image-wrapper.zoomed-out img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+.image-frame.zoomed-out img {
   object-fit: contain;
 }
 
+/* Text Info */
+.info-area {
+  height: 2rem; /* Fixed height to prevent jumping */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hint {
+  font-size: 1rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.reveal-text {
   font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin: 0;
+  animation: fadeIn 0.5s ease;
+}
+
+/* Neumorphic Buttons */
+.neu-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 50px;
+  background: var(--bg-color);
+  color: var(--btn-text);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.neu-btn:active {
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  transform: translateY(1px);
+}
+
+.neu-btn:hover {
+  color: var(--accent-color);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.theme-toggle:active {
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+/* Neumorphic Checkbox */
+.neu-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  margin-top: 10px;
+}
+
+.neu-checkbox-label input {
+  display: none; /* Hide default checkbox */
+}
+
+.neu-checkbox-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--bg-color);
+  box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* Checked State: Inset Shadow */
+.neu-checkbox-label input:checked + .neu-checkbox-box {
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+.checkmark {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-color);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s cubic-bezier(0.5, 1.6, 0.4, 0.7);
+}
+
+.neu-checkbox-label input:checked + .neu-checkbox-box .checkmark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkbox-text {
+  font-size: 0.9rem;
+  color: var(--text-color);
   opacity: 0.8;
-  min-height: 1.5em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .image-frame {
+    width: 250px;
+    height: 250px;
+  }
+  .title {
+    font-size: 2rem;
+  }
 }
 </style>
