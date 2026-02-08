@@ -69,6 +69,7 @@ const imageData = Object.entries(imagesGlob).map(([key, mod]) => {
 const currentIndex = ref(0)
 const isZoomedOut = ref(false)
 const isDarkMode = ref(false)
+const isRedirectEnabled = ref(true) // Default to enabled
 
 const currentImage = computed(() => imageData[currentIndex.value]?.path)
 const currentConfig = computed(() => imageData[currentIndex.value]?.config)
@@ -83,10 +84,12 @@ const handleClick = () => {
   if (isZoomedOut.value) return
   isZoomedOut.value = true
 
-  // Wait for animation to finish (3s), then open Wikipedia
-  setTimeout(() => {
-    window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
-  }, 3000)
+  // Only redirect if enabled
+  if (isRedirectEnabled.value) {
+    setTimeout(() => {
+      window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
+    }, 3000)
+  }
 }
 
 const toggleTheme = () => {
@@ -141,6 +144,18 @@ onMounted(() => {
         <button class="retry-btn neu-btn" @click="pickRandomImage">
           Try another one
         </button>
+
+        <!-- Neumorphic Checkbox -->
+        <label class="neu-checkbox-label">
+          <input type="checkbox" v-model="isRedirectEnabled" />
+          <div class="neu-checkbox-box">
+            <svg viewBox="0 0 24 24" class="checkmark">
+              <path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="checkbox-text">Enable Wikipedia Redirect</span>
+        </label>
+
       </div>
 
       <div v-else class="neu-card">
@@ -326,6 +341,57 @@ img {
 
 .theme-toggle:active {
   box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+/* Neumorphic Checkbox */
+.neu-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  margin-top: 10px;
+}
+
+.neu-checkbox-label input {
+  display: none; /* Hide default checkbox */
+}
+
+.neu-checkbox-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--bg-color);
+  box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* Checked State: Inset Shadow */
+.neu-checkbox-label input:checked + .neu-checkbox-box {
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+.checkmark {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-color);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s cubic-bezier(0.5, 1.6, 0.4, 0.7);
+}
+
+.neu-checkbox-label input:checked + .neu-checkbox-box .checkmark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkbox-text {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.8;
 }
 
 @keyframes fadeIn {
