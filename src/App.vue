@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue'
 
 // Import all images from the folder
 // Using standard Vite glob import.
@@ -97,6 +97,72 @@ const toggleTheme = () => {
   document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light')
 }
 
+// --- Background Animation ---
+const canvas = ref(null)
+let ctx = null
+let animationFrameId
+let particles = []
+
+const particleColor = computed(() => {
+  return isDarkMode.value ? 'rgba(79,9,179,0.68)' : 'rgba(188,30,30,0.68)'
+})
+
+class Particle {
+  constructor(w, h) {
+    this.x = Math.random() * w
+    this.y = Math.random() * h
+    this.vx = (Math.random() - 0.5) * 0.5
+    this.vy = (Math.random() - 0.5) * 0.5
+    this.size = Math.random() * 3 + 1
+  }
+
+  update(w, h) {
+    this.x += this.vx
+    this.y += this.vy
+
+    if (this.x < 0 || this.x > w) this.vx *= -1
+    if (this.y < 0 || this.y > h) this.vy *= -1
+  }
+
+  draw(context) {
+    context.beginPath()
+    context.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+    context.fillStyle = particleColor.value
+    context.fill()
+  }
+}
+
+const initParticles = () => {
+  if (!canvas.value) return
+  const w = canvas.value.width
+  const h = canvas.value.height
+  particles = []
+  const particleCount = Math.floor((w * h) / 20000) // Adjust density
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle(w, h))
+  }
+}
+
+const animate = () => {
+  if (!canvas.value || !ctx) return
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
+
+  particles.forEach(p => {
+    p.update(canvas.value.width, canvas.value.height)
+    p.draw(ctx)
+  })
+
+  animationFrameId = requestAnimationFrame(animate)
+}
+
+const handleResize = () => {
+  if (canvas.value) {
+    canvas.value.width = window.innerWidth
+    canvas.value.height = window.innerHeight
+    initParticles()
+  }
+}
+
 onMounted(() => {
   // Detect system preference
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -106,11 +172,26 @@ onMounted(() => {
     document.documentElement.setAttribute('data-theme', 'light')
   }
   pickRandomImage()
+
+  // Init Canvas
+  if (canvas.value) {
+    ctx = canvas.value.getContext('2d')
+    handleResize()
+    animate()
+    window.addEventListener('resize', handleResize)
+  }
+})
+
+onUnmounted(() => {
+  cancelAnimationFrame(animationFrameId)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
 <template>
   <main>
+    <canvas ref="canvas" class="background-canvas"></canvas>
+
     <!-- Theme Toggle -->
     <button class="theme-toggle neu-btn-icon" @click="toggleTheme" title="Toggle Theme">
       <span v-if="isDarkMode">☀️</span>
@@ -203,6 +284,17 @@ main {
   justify-content: center;
   position: relative;
   padding: 20px;
+  /* Ensure main is relative for absolute children if needed, but we use fixed for canvas */
+}
+
+.background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .content-wrapper {
@@ -212,6 +304,7 @@ main {
   gap: 2rem;
   width: 100%;
   max-width: 500px;
+  z-index: 1; /* Above canvas */
 }
 
 .title {
