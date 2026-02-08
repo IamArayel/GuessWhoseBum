@@ -68,6 +68,7 @@ const imageData = Object.entries(imagesGlob).map(([key, mod]) => {
 
 const currentIndex = ref(0)
 const isZoomedOut = ref(false)
+const isDarkMode = ref(false)
 
 const currentImage = computed(() => imageData[currentIndex.value]?.path)
 const currentConfig = computed(() => imageData[currentIndex.value]?.config)
@@ -79,136 +80,267 @@ const pickRandomImage = () => {
 }
 
 const handleClick = () => {
-  if (isZoomedOut.value) return // Already clicked
-
+  if (isZoomedOut.value) return
   isZoomedOut.value = true
 
   // Wait for animation to finish (3s), then open Wikipedia
-  // setTimeout(() => {
-  //   window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
-  // }, 3000)
+  setTimeout(() => {
+    window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
+  }, 3000)
+}
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  document.documentElement.setAttribute('data-theme', isDarkMode.value ? 'dark' : 'light')
 }
 
 onMounted(() => {
+  // Detect system preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    isDarkMode.value = true
+    document.documentElement.setAttribute('data-theme', 'dark')
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light')
+  }
   pickRandomImage()
 })
 </script>
 
 <template>
   <main>
-    <button class="retry-btn" @click="pickRandomImage">I need to try again</button>
-    <h1>Guess whose bum?</h1>
-    <div class="game-container" v-if="currentImage">
-      <div
-        class="image-wrapper"
-        @click="handleClick"
-        :class="{ 'zoomed-out': isZoomedOut }"
-      >
-        <img
-          :src="currentImage"
-          alt="Guess whose bum"
-          :style="{
-            transformOrigin: `${currentConfig.x}% ${currentConfig.y}%`,
-            transform: isZoomedOut ? 'scale(1)' : `scale(${currentConfig.scale})`
-          }"
-        />
+    <!-- Theme Toggle -->
+    <button class="theme-toggle neu-btn-icon" @click="toggleTheme" title="Toggle Theme">
+      <span v-if="isDarkMode">☀️</span>
+      <span v-else>🌙</span>
+    </button>
+
+    <div class="content-wrapper">
+      <h1 class="title">Guess whose bum?</h1>
+
+      <div class="game-card neu-card" v-if="currentImage">
+        <div
+          class="image-frame neu-inset"
+          @click="handleClick"
+          :class="{ 'zoomed-out': isZoomedOut }"
+        >
+          <img
+            :src="currentImage"
+            alt="Guess whose bum"
+            :style="{
+              transformOrigin: `${currentConfig.x}% ${currentConfig.y}%`,
+              transform: isZoomedOut ? 'scale(1)' : `scale(${currentConfig.scale})`
+            }"
+          />
+        </div>
+
+        <div class="info-area">
+          <p class="hint" v-if="!isZoomedOut">Click to reveal</p>
+          <p class="reveal-text" v-else>OMG! It's Jensen Ackles bum!</p>
+        </div>
+
+        <button class="retry-btn neu-btn" @click="pickRandomImage">
+          Try another one
+        </button>
       </div>
-      <p class="hint" v-if="!isZoomedOut">Click the image to reveal!</p>
-      <p class="hint" v-else>OMG! It's Jensen Ackles bum!</p>
-    </div>
-    <div v-else>
-      <p>No images found in ./components/img/bums/</p>
+
+      <div v-else class="neu-card">
+        <p>No images found.</p>
+      </div>
     </div>
   </main>
 </template>
 
+<style>
+/* Global Variables for Neumorphism */
+:root {
+  --bg-color: #e0e5ec;
+  --text-color: #4d4d4d;
+  --shadow-light: #ffffff;
+  --shadow-dark: #a3b1c6;
+  --accent-color: #6d5dfc;
+  --btn-text: #4d4d4d;
+}
+
+[data-theme="dark"] {
+  --bg-color: #292d3e;
+  --text-color: #e6e6e6;
+  --shadow-light: #35394f;
+  --shadow-dark: #1d212d;
+  --accent-color: #8278f7;
+  --btn-text: #e6e6e6;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+</style>
+
 <style scoped>
 main {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background-color: #222;
-  color: white;
-  font-family: sans-serif;
-  text-align: center;
-  position: relative; /* Needed for absolute positioning of the button */
+  position: relative;
+  padding: 20px;
 }
 
-.retry-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  cursor: pointer;
-  background-color: #fff;
-  color: #222;
-  border: none;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: background-color 0.2s;
-  z-index: 10;
-}
-
-.retry-btn:hover {
-  background-color: #eee;
-}
-
-h1 {
-  margin-bottom: 2rem;
-  font-size: 2rem;
-}
-
-.game-container {
+.content-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
+  width: 100%;
+  max-width: 500px;
 }
 
-.image-wrapper {
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
+  text-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+}
+
+/* Neumorphic Card */
+.neu-card {
+  background: var(--bg-color);
+  border-radius: 30px;
+  box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* Image Frame (Inset Shadow) */
+.image-frame {
   width: 300px;
   height: 300px;
+  border-radius: 20px;
   overflow: hidden;
-  border: 4px solid #fff;
-  border-radius: 12px;
   cursor: pointer;
   position: relative;
-  background-color: #000;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: all 0.4s ease; /* Added transition for wrapper size changes */
+  border: 5px solid var(--bg-color); /* Creates spacing for the inset shadow */
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.image-wrapper.zoomed-out {
-  width: auto;
+.neu-inset {
+  box-shadow: inset 8px 8px 16px var(--shadow-dark), inset -8px -8px 16px var(--shadow-light);
+}
+
+.image-frame.zoomed-out {
+  width: 100%;
   height: auto;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow: visible;
+  aspect-ratio: 1/1; /* Maintain square or adjust as needed */
+  box-shadow: none; /* Remove inset shadow when revealed if desired, or keep it */
+  border-radius: 10px;
 }
 
 img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  /* transform and transform-origin are set inline */
   display: block;
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.image-wrapper.zoomed-out img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+.image-frame.zoomed-out img {
   object-fit: contain;
 }
 
+/* Text Info */
+.info-area {
+  height: 2rem; /* Fixed height to prevent jumping */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hint {
+  font-size: 1rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.reveal-text {
   font-size: 1.2rem;
-  opacity: 0.8;
-  min-height: 1.5em;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin: 0;
+  animation: fadeIn 0.5s ease;
+}
+
+/* Neumorphic Buttons */
+.neu-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 50px;
+  background: var(--bg-color);
+  color: var(--btn-text);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.neu-btn:active {
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  transform: translateY(1px);
+}
+
+.neu-btn:hover {
+  color: var(--accent-color);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.theme-toggle:active {
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .image-frame {
+    width: 250px;
+    height: 250px;
+  }
+  .title {
+    font-size: 2rem;
+  }
 }
 </style>
