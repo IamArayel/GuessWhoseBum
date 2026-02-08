@@ -10,41 +10,41 @@ const imagesGlob = import.meta.glob('./components/img/bums/*.jpg', { eager: true
 // x:0, y:0 est en haut à gauche, x:100, y:100 est en bas à droite.
 // Centrer le zoom sur la partie "intéressante" de l'image.
 const focusPoints = {
-  '01.jpg': { x: 65, y: 50 },
-  '02.jpg': { x: 75, y: 45 },
-  '03.jpg': { x: 75, y: 75 },
-  '04.jpg': { x: 75, y: 75 },
-  '05.jpg': { x: 50, y: 50 },
-  '06.jpg': { x: 90, y: 30 },
-  '07.jpg': { x: 40, y: 55 },
-  '08.jpg': { x: 55, y: 85 },
-  '09.jpg': { x: 35, y: 70 },
-  '10.jpg': { x: 75, y: 50 },
-  '11.jpg': { x: 50, y: 50 },
-  '12.jpg': { x: 50, y: 50 },
-  '13.jpg': { x: 50, y: 50 },
-  '14.jpg': { x: 50, y: 50 },
-  '15.jpg': { x: 50, y: 50 },
-  '16.jpg': { x: 50, y: 55 },
-  '17.jpg': { x: 45, y: 60 },
+  '01.jpg': { x: 70, y: 65 },
+  '02.jpg': { x: 85, y: 65 },
+  '03.jpg': { x: 85, y: 85 },
+  '04.jpg': { x: 80, y: 80 },
+  '05.jpg': { x: 45, y: 70 },
+  '06.jpg': { x: 97, y: 20 },
+  '07.jpg': { x: 30, y: 60 },
+  '08.jpg': { x: 65, y: 85 },
+  '09.jpg': { x: 30, y: 70 },
+  '10.jpg': { x: 80, y: 85 },
+  '11.jpg': { x: 25, y: 95 },
+  '12.jpg': { x: 30, y: 95 },
+  '13.jpg': { x: 50, y: 90 },
+  '14.jpg': { x: 25, y: 60 },
+  '15.jpg': { x: 50, y: 80 },
+  '16.jpg': { x: 50, y: 60 },
+  '17.jpg': { x: 45, y: 85 },
   '18.jpg': { x: 35, y: 50 },
-  '19.jpg': { x: 40, y: 50 },
-  '20.jpg': { x: 50, y: 80 },
-  '21.jpg': { x: 50, y: 65 },
-  '22.jpg': { x: 50, y: 50 },
-  '23.jpg': { x: 65, y: 50 },
-  '24.jpg': { x: 50, y: 50 },
-  '25.jpg': { x: 50, y: 50 },
-  '26.jpg': { x: 50, y: 50 },
-  '27.jpg': { x: 50, y: 50 },
-  '28.jpg': { x: 50, y: 50 },
+  '19.jpg': { x: 25, y: 55 },
+  '20.jpg': { x: 50, y: 95 },
+  '21.jpg': { x: 50, y: 85 },
+  '22.jpg': { x: 55, y: 60 },
+  '23.jpg': { x: 70, y: 65 },
+  '24.jpg': { x: 55, y: 50 },
+  '25.jpg': { x: 45, y: 75 },
+  '26.jpg': { x: 25, y: 50 },
+  '27.jpg': { x: 80, y: 50 },
+  '28.jpg': { x: 60, y: 80 },
   '29.jpg': { x: 50, y: 55 },
-  '30.jpg': { x: 50, y: 50 },
-  '31.jpg': { x: 50, y: 85 },
-  '32.jpg': { x: 45, y: 55 },
-  '33.jpg': { x: 50, y: 55 },
-  '34.jpg': { x: 50, y: 50 },
-  '35.jpg': { x: 55, y: 50 },
+  '30.jpg': { x: 55, y: 50 },
+  '31.jpg': { x: 45, y: 85 },
+  '32.jpg': { x: 40, y: 55 },
+  '33.jpg': { x: 45, y: 60 },
+  '34.jpg': { x: 40, y: 20 },
+  '35.jpg': { x: 65, y: 45 },
 }
 
 // Transformation de la liste des images pour inclure la config
@@ -84,9 +84,9 @@ const handleClick = () => {
   isZoomedOut.value = true
 
   // Wait for animation to finish (3s), then open Wikipedia
-  setTimeout(() => {
-    window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
-  }, 3000)
+  // setTimeout(() => {
+  //   window.open('https://wikipedia.org/wiki/Jensen_Ackles', '_blank')
+  // }, 3000)
 }
 
 onMounted(() => {
