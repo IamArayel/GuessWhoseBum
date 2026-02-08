@@ -177,12 +177,12 @@ onMounted(() => {
 }
 
 [data-theme="dark"] {
-  --bg-color: #292d3e;
-  --text-color: #e6e6e6;
-  --shadow-light: #35394f;
-  --shadow-dark: #1d212d;
-  --accent-color: #8278f7;
-  --btn-text: #e6e6e6;
+  --bg-color: #121212; /* Deep Black */
+  --text-color: #e0e0e0;
+  --shadow-light: #1e1e1e; /* Slightly lighter for highlight */
+  --shadow-dark: #000000; /* Pure black for shadow */
+  --accent-color: #bb86fc; /* Purple accent often used in dark modes */
+  --btn-text: #e0e0e0;
 }
 
 body {
